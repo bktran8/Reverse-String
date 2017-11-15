@@ -1,0 +1,101 @@
+*----------------------------------------------------------------------
+* Programmer: Brenda Tran	
+* Class Account: cssc0253
+* Assignment or Title: Program 4
+* Filename: prog4.s
+* Date completed:5/3/17
+*----------------------------------------------------------------------
+* Problem statement: Reverse a string
+* Input: A string
+* Output: String backwards
+* Error conditions tested: none
+* Included files: none
+* Method and/or pseudocode: none
+* References: none
+*----------------------------------------------------------------------
+*
+reverse:	EQU     $6000		*location of reverse subroutine 
+       		ORG     $0
+        		DC.L    $3000           * Stack pointer value after a reset
+        		DC.L    start           * Program counter value after a reset
+        		ORG     $3000           * Start at location 3000 Hex
+*
+*----------------------------------------------------------------------
+#minclude /home/cs/faculty/riggins/bsvc/macros/iomacs.s
+#minclude /home/cs/faculty/riggins/bsvc/macros/evtmacs.s
+*----------------------------------------------------------------------
+* Register use
+*----------------------------------------------------------------------
+*
+start:  	initIO                  * Initialize (required for I/O)
+setEVT			* Error handling routines
+*	initF			* For floating point macros only	
+
+        	lineout     title			*output title
+       	    lineout     p1			*output prompt
+        	linein      buffer		*user input
+       	    move.w      D0,-(SP)        	*decrement pointer by 2, move string length onto stack - parameter
+        	pea         answer		*push answer storage onto stack - parameter
+        	pea         buffer 		*push buffer storage onto stack - parameter
+        	jsr         reverse		*call reverse subroutine – pushes return address on top of parameters
+        	adda.l      #10,SP		*pop parameters off of stack – add bytes taken by parameters 
+        	lea         answer,A1		*load address of answer into A1
+        	add.l       D0,A1		*move returned answer from D0 to A1
+        	clr.b       (A1)			*null terminate
+        	lineout     done 		*output final prompt
+        	
+break                   * Terminate execution
+
+
+
+
+
+*----------------------------------------------------------------------
+*       Storage declarations
+
+title:  dc.b    'Program 4, Brenda Tran, cssc0253',0
+p1:     dc.b    'Enter a string here:',0
+buffer: ds.b    82
+done:   dc.b    'Here is the string backwards: '
+answer: ds.b    82
+
+        end
+
+_______________________________________________________________________________________
+*Program4, Brenda Tran, cssc0253
+*void reverse(char &in, char &out, int count)
+
+            		ORG     $6000			*reverse code will begin to load at this address
+input:      	EQU     8			*offset from A6 pointer to parameters
+output:     	EQU     12			*offset from A6 pointer to parameters
+count:      	EQU     14			*offset from A6 pointer to parameters
+
+
+reverse:    	link    A6,#0			*fixed reference for parameters, 0 = no local storage aloocated
+            		movem.l D1/A0-A1,-(SP)	*loading contents of registers that will be used in reverse.s 
+            		movea.l input(A6),A0    	*parameter of input is copied into register from stack 
+            		movea.l output(A6),A1   	*parameter of output is copied into register from stack
+            		move.l  count(A6),D1    	*parameter of count is copied into register from stack 
+            		tst.w   D1              		*test D1 to see if it is empty
+            		beq     out             		*return back to main program is true 
+            		addq.l  #1,A0          		*in+1
+            		subq.l  #1,D1            		*--count
+            		move.w  D1,-(SP)        		*push count, decrement pointer by 2 bytes
+            		pea     (A1)			*push out on stack
+            		pea     (A0)			*push in on stack
+           	 	jsr     reverse			*calls recursion
+            		adda.l  #10,SP			*pop the bytes pushed
+            		ext.l   D1
+            		subq.l  #1,A0			*in-1
+            		adda.l  D1,A1			*in+out
+            		move.b  (A0),(A1)		*move byte of in to out
+            
+out:     		movem.l (SP)+,D1/A0-A1	*restore the contents in register – main prog
+            		unlk    A6			*reverse link
+            		rts				*return back to main prog
+            		end
+           
+            
+
+              
+
